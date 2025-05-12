@@ -1,13 +1,18 @@
+from dotenv import load_dotenv, dotenv_values
+import os
 from time import sleep
 from datetime import datetime
 import requests
+
+load_dotenv()
 
 
 class Nanny():
     def __init__(self):
         self._action = None
         self.cnt = 0
-        self.api_url = "http://localhost:3030/api/about"  # Example REST endpoint
+        # Example REST endpoint
+        self.api_url = os.getenv("WON_SERVICE_ENDPOINT") + "about"
         self.last_fetch = datetime.now()
         self.events = {}
 
@@ -47,6 +52,9 @@ class Nanny():
 
 def main():
     roboNanny = Nanny()
+
+    print("Service endpoint:", os.getenv("WON_SERVICE_ENDPOINT"))
+
     while True:
         try:
             roboNanny.do_action()
