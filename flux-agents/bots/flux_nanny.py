@@ -1,6 +1,5 @@
 from config import settings
 from datetime import datetime
-from time import sleep
 import requests
 from urllib.parse import urlencode
 
@@ -26,7 +25,7 @@ class FluxNanny:
     def fetch_fluxes(self):
         check_for_more = True
         offset = 0
-        limit = 0
+        limit = 10
         posted_after = None
         if self.high_water_mark:
             # Format with 'Z' for UTC timezone instead of '+00:00'
@@ -55,9 +54,7 @@ class FluxNanny:
                     items = payload["items"]
                     total = payload["total"]
                     has_more = payload["hasMore"]
-
-                    print("Response payload:")
-                    print(payload)
+                    print("\nFound {} fluxes to process.\n".format(total))
 
                     for flux in items:
                         key = flux["id"]
@@ -81,12 +78,13 @@ class FluxNanny:
                     check_for_more = False
 
                 self.status_report()
-                sleep(2)
+                if check_for_more:
+                    print("But wait...there's more.")
+                else:
+                    print('===\n')
 
         except requests.exceptions.RequestException as e:
             print(f"Request error: {e}")
 
     def do_action(self):
         self.fetch_fluxes()
-        print('===')
-        sleep(10)
