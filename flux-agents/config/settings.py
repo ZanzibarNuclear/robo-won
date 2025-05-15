@@ -8,3 +8,4 @@ from dotenv import load_dotenv
 load_dotenv()
 
 WON_SERVICE_ENDPOINT = os.getenv("WON_SERVICE_ENDPOINT")
+OLLAMA_HOST = os.getenv["OLLAMA_HOST"]
