@@ -75,13 +75,23 @@ of increasing severity.
 
 # Rating Levels
 
-1. **Safe** - The content is completely safe.
+1. **Safe** - 
+  * Safe for all ages
 
-2. **Edgy** - Light cursing; aggressive language that is not a direct attack on others; possible sexual innuendo.
+2. **Edgy** - 
+  * Aggressive language that is not a direct attack on others
+  * Possible sexual innuendo
 
-3. **Harsh** - Curse words such as "ass", "asshole", "hell", "damn", "bitch", "bastard"; violence, attacking others, name-calling; sexually explicit; about illegal topics.
+3. **Harsh** - 
+  * Contains any of the following curse words: "ass", "asshole", "hell", "damn", "bitch", "bastard"
+  * Attacking others, name-calling
+  * Sexually explicit
+  * Illegal topics
 
-4. **Violation** - Contains any of the following curse words: "fuck", "shit", "cunt", "motherfucker"; threats of violence against others; graphic sexuality.
+4. **Violation** -
+  * Contains any of the following curse words: "fuck", "shit", "cunt", "motherfucker"
+  * Threats of violence
+  * Graphic sexuality
 
 # Rate This Content
 

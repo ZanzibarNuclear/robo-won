@@ -1,11 +1,10 @@
-import os
 import json
 from ollama import Client
-from prompts import *
-from formats import *
+from api.prompts import *
+from api.formats import *
 from string import Template
 
-os.environ['OLLAMA_HOST'] = 'http://192.168.1.239:11434'
+# os.environ['OLLAMA_HOST'] = 'http://192.168.1.239:11434'
 
 
 class ModeratorBotClient:

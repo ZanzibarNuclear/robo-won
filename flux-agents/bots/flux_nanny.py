@@ -2,6 +2,7 @@ from config import settings
 from datetime import datetime
 import requests
 from urllib.parse import urlencode
+from api.llm import ModeratorBotClient
 
 
 class FluxNanny:
@@ -12,6 +13,12 @@ class FluxNanny:
         self.fluxes_seen = {}
         self.last_fetch = None
         self.high_water_mark = None
+        self.ai = ModeratorBotClient()
+        if self.ai.ping_ai():
+            print("AI agent is reachable")
+        else:
+            print("No response from AI agent")
+            raise Exception("AI agent is not responsive")
 
     def status_report(self):
         # print("The last time we checked for flux: {}\nThe latest flux we processed so far.\n".format(
@@ -64,7 +71,11 @@ class FluxNanny:
                         else:
                             print("Processing flux id=", key)
                             print(flux["content"])
-                            self.fluxes_seen[key] = flux
+
+                            rating = self.ai.evaluate_post(flux)
+                            print(rating)
+                            self.fluxes_seen[key] = rating
+
                             if (flux["postedAt"]):
                                 self.high_water_mark = datetime.fromisoformat(
                                     flux["postedAt"])
