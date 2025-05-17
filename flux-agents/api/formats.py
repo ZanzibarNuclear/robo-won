@@ -15,14 +15,18 @@ rating_format = {
     "properties": {
         "rating": {
             "type": "string",
-            "enum": ["safe", "edgy", "strong", "naughty"]
+            "enum": ["Safe", "Edgy", "Harsh", "Violation"]
         },
         "reason": {
+            "type": "string"
+        },
+        "think": {
             "type": "string"
         }
     },
     "required": [
         "rating",
-        "reason"
+        "reason",
+        "think"
     ]
 }

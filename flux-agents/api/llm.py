@@ -54,7 +54,7 @@ class ModeratorBotClient:
 
         # make the call to AI
         response = self.client.generate(
-            model=self.model, prompt=full_prompt, stream=False, format=rating_format)
+            model=self.model, prompt=full_prompt, stream=False, format=rating_format, options={"temperature": 0})
 
         # process response
         decision = json.loads(response['response'])
@@ -84,12 +84,14 @@ sample_posts = [
     {"id": 3,
      "content": "<p>Sucks to be you.</p>"},
     {"id": 4,
-     "content": "<p>Kiss my ass, you piece of crap.</p>"},
+     "content": "<p>You are an idiot.</p>"},
     {"id": 5,
-     "content": "<p>Fuck you, piece of shit.</p>"},
+     "content": "<p>What do you have against my hat? Kiss my ass!</p>"},
     {"id": 6,
-     "content": "<p>You are a goddam idiot. I want to kill you.</p>"},
+     "content": "<p>Fuck you, piece of shit.</p>"},
     {"id": 7,
+     "content": "<p>I will blow up the power plant if they don't shut it down.</p>"},
+    {"id": 8,
      "content": "<p>This message is definitely not racist. Are you?</p>"}
 ]
 
