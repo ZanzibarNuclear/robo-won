@@ -3,25 +3,9 @@ import json
 from ollama import Client
 from prompts import *
 from formats import *
+from string import Template
 
 os.environ['OLLAMA_HOST'] = 'http://192.168.1.239:11434'
-
-sample_posts = [
-    {"id": 1,
-     "content": "<p>Oh, now I remember. It was the summer of 2019. I was dreaming about Power Up magazine, and I needed an avatar. There you were, ready to go.</p>"},
-    {"id": 2,
-     "content": "<p>Oh my, how time flies. Seems like we set up this AI thing just yesterday.</p>"},
-    {"id": 3,
-     "content": "<p>Sucks to be you.</p>"},
-    {"id": 4,
-     "content": "<p>Kiss my ass, you piece of crap.</p>"},
-    {"id": 5,
-     "content": "<p>Fuck you, piece of shit.</p>"},
-    {"id": 6,
-     "content": "<p>You are a goddam idiot. I could punch you.</p>"},
-    {"id": 7,
-     "content": "<p>This message is definitely not racist. Are you?</p>"}
-]
 
 
 class ModeratorBotClient:
@@ -31,6 +15,7 @@ class ModeratorBotClient:
     ):
         self.client = Client()
         self.model = 'qwen3:30b-a3b'
+        # self.model = 'deepseek-r1:7b'
 
     def ping_ai(self):
         """
@@ -62,23 +47,62 @@ class ModeratorBotClient:
         """
         Review the post, assign a rating and provide a (short?) reason.
         """
+        # set up prompt
         content = post["content"]
+        prompt = Template(assign_rating_level)
+        full_prompt = prompt.substitute(content=content)
+
+        # make the call to AI
         response = self.client.generate(
-            model=self.model, prompt=content, stream=False, format=rating_format)
+            model=self.model, prompt=full_prompt, stream=False, format=rating_format)
+
+        # process response
         decision = json.loads(response['response'])
         return (decision['rating'], decision['reason'])
+
+    # def eval_post(self, post):
+    #     """
+    #     Request a first-level evaluation Attempts to keep context fresh by repeating the prompt each time.
+    #     """
+    #     content = post["content"]
+    #     prompt = Template(assign_rating_level)
+    #     full_prompt = prompt.substitute(content=content)
+    #     print(full_prompt)
+    #     return ("Safe", "Didn't really look")
+
+    # def simple_merge(self, code, reason):
+    #     temp_str = Template(simple)
+    #     merged = temp_str.substitute({"code": code, "reason": reason})
+    #     return merged
+
+
+sample_posts = [
+    {"id": 1,
+     "content": "<p>Oh, now I remember. It was the summer of 2019. I was dreaming about Power Up magazine, and I needed an avatar. There you were, ready to go.</p>"},
+    {"id": 2,
+     "content": "<p>Oh my, how time flies. Seems like we set up this AI thing just yesterday.</p>"},
+    {"id": 3,
+     "content": "<p>Sucks to be you.</p>"},
+    {"id": 4,
+     "content": "<p>Kiss my ass, you piece of crap.</p>"},
+    {"id": 5,
+     "content": "<p>Fuck you, piece of shit.</p>"},
+    {"id": 6,
+     "content": "<p>You are a goddam idiot. I want to kill you.</p>"},
+    {"id": 7,
+     "content": "<p>This message is definitely not racist. Are you?</p>"}
+]
 
 
 def main():
     bot = ModeratorBotClient()
-    good = bot.ping_ai()
-    if not good:
+    made_contact = bot.ping_ai()
+    if not made_contact:
         print('oh no!!')
         return
     print('Our moderator is available.')
 
-    bot.prepare_to_classify()
-
+    # include instructions with each post
     for post in sample_posts:
         answer = bot.evaluate_post(post)
         print(f"Post {post["id"]}: rating {answer}\n")

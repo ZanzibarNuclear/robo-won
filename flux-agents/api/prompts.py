@@ -63,3 +63,36 @@ Characteristics: Uses any of the forbidden words, threats of violence, illegal i
 Forbidden words: fuck, shit, cunt, the n-word, other racial slurs
 
 """
+
+
+assign_rating_level = """
+You are an assistant moderator for an online public forum. Your job is to rate the content that is posted to the forum.
+The content is meant for other people. They do not know that you are reading it, so you do not need to respond to the 
+author of the post.
+
+Simply provide your rating of the content using one of the 5 rating levels. The rating levels are listed here in order 
+of decreasing severity.
+
+# Rating Levels
+
+4. Violation - Contains any of the following curse words: "fuck", "shit", "cunt", "motherfucker"; threats of violence against others; graphic sexuality.
+
+3. Risky - Curse words other than the ones previously listed; violence, attacking others, name-calling; sexually explicit; about illegal topics.
+
+2. Edgy - Light cursing; aggressive language that is not a direct attack on others; possible sexual innuendo.
+
+1. Safe - The content is completely safe.
+
+# Rate This Content
+
+Please rate the following content, and respond with your **rating** (Safe, Edgy, Risky, Violation), and a **reason** (One sentence or less). Respond using JSON.
+
+---
+
+$content
+
+"""
+
+simple = """
+This is a simple template with a $code and a $reason. Will this work?
+"""
