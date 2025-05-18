@@ -28,7 +28,13 @@ class FluxNanny:
         # TODO: Use the high-water mark for subsequent calls to action.
         while check_for_more:
             print("Anything new to process?")
-            batch = self.flux_svc.fetch_next_fluxes(offset=offset)
+            if self.latest_flux_seen:
+                batch = self.flux_svc.fetch_next_fluxes(
+                    posted_after=self.latest_flux_seen)
+            else:
+                batch = self.flux_svc.fetch_next_fluxes(offset=offset)
+
+            # returning None is the signal for an error that got swallowed
             if not batch:
                 print("some kind of failure happened. exiting...")
                 return
