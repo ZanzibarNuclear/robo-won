@@ -6,8 +6,6 @@ from time import sleep
 def main():
     roboNanny = FluxNanny()
     round = 0
-    print("Service endpoint:", settings.WON_SERVICE_ENDPOINT)
-
     while True:
         try:
             round += 1

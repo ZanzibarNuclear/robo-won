@@ -24,9 +24,11 @@ class FluxNanny:
     def do_action(self):
         offset = 0
         check_for_more = True
+
+        # TODO: Use the high-water mark for subsequent calls to action.
         while check_for_more:
             print("Anything new to process?")
-            batch = self.flux_svc.fetch_next_fluxes()
+            batch = self.flux_svc.fetch_next_fluxes(offset=offset)
             if not batch:
                 print("some kind of failure happened. exiting...")
                 return
@@ -50,7 +52,7 @@ class FluxNanny:
                     print("Asking AI to rate flux", key)
                     (rating, reason) = self.ai.evaluate_post(flux)
                     print(
-                        "AI has rated this flux as '{rating}' because '{reason}'")
+                        f"AI has rated this flux as '{rating}' because '{reason}'")
 
                     # record the rating
                     self.flux_svc.rate_flux(key, rating, reason)

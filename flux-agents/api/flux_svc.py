@@ -32,8 +32,8 @@ class FluxService:
     def rate_flux(self, flux_id, rating_code, reason):
         url = f"{self.endpoint}/flux-moderation/ratings"
         payload = {
-            "flux_id": flux_id,
-            "rating_code": rating_code,
+            "fluxId": flux_id,
+            "rating": rating_code,
             "reason": reason
         }
 
