@@ -15,6 +15,17 @@ class FluxNanny:
         self.flux_svc = FluxService()
         self.ai = ModeratorBotClient()
 
+        # set high-water mark to prevent re-work
+        results = self.flux_svc.fetch_last_rating()
+        if results:
+            latest = results[0]
+            print(f"inspection: {latest}")
+            print(
+                f"Setting high water mark at: {latest['postedAt']}")
+            self.latest_flux_seen = datetime.fromisoformat(
+                latest['postedAt'])
+
+        # make sure AI is alive and well
         if self.ai.ping_ai():
             print("AI agent is reachable")
         else:
@@ -25,7 +36,6 @@ class FluxNanny:
         offset = 0
         check_for_more = True
 
-        # TODO: Use the high-water mark for subsequent calls to action.
         while check_for_more:
             print("Anything new to process?")
             if self.latest_flux_seen:

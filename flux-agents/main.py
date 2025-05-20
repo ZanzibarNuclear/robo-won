@@ -1,6 +1,6 @@
 from bots.flux_nanny import FluxNanny
-from config import settings
 from time import sleep
+from config.settings import POLLING_INTERVAL
 
 
 def main():
@@ -9,10 +9,10 @@ def main():
     while True:
         try:
             round += 1
-            print("==== KICK OFF BOTS ====")
+            print(f"==== ROUND {round} ====")
             roboNanny.do_action()
-            print("\nFinished round {}\n\n\n".format(round))
-            sleep(10)
+            print(f"\n==== END ROUND {round} ====\n\n")
+            sleep(30)
         except KeyboardInterrupt as e:
             print("I guess you have had enough. Shutting down...goodbye!")
             break
