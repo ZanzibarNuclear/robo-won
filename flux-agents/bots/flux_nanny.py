@@ -1,7 +1,7 @@
-from config import settings
 from datetime import datetime
-import requests
 from urllib.parse import urlencode
+from api.llm import ModeratorBotClient
+from api.flux_svc import FluxService
 
 
 class FluxNanny:
@@ -11,80 +11,75 @@ class FluxNanny:
         self._action = None
         self.fluxes_seen = {}
         self.last_fetch = None
-        self.high_water_mark = None
+        self.latest_flux_seen = None
+        self.flux_svc = FluxService()
+        self.ai = ModeratorBotClient()
 
-    def status_report(self):
-        # print("The last time we checked for flux: {}\nThe latest flux we processed so far.\n".format(
-        #     self.last_fetch, self.high_water_mark))
-        print("""
-            The last time we checked for flux: {}
-            The latest flux we processed so far: {}
-            We have processed {} fluxes since starting.
-        """.format(datetime.isoformat(self.last_fetch), datetime.isoformat(self.high_water_mark), len(self.fluxes_seen)))
+        # set high-water mark to prevent re-work
+        results = self.flux_svc.fetch_last_rating()
+        if results:
+            latest = results[0]
+            print(f"inspection: {latest}")
+            print(
+                f"Setting high water mark at: {latest['postedAt']}")
+            self.latest_flux_seen = datetime.fromisoformat(
+                latest['postedAt'])
 
-    def fetch_fluxes(self):
-        check_for_more = True
-        offset = 0
-        limit = 10
-        posted_after = None
-        if self.high_water_mark:
-            # Format with 'Z' for UTC timezone instead of '+00:00'
-            posted_after = self.high_water_mark.strftime(
-                '%Y-%m-%dT%H:%M:%S.%fZ')
-
-        try:
-            while check_for_more:
-                filter = {"order": "oldest"}
-                if offset:
-                    filter["offset"] = offset
-                if limit:
-                    filter["limit"] = limit
-                if posted_after:
-                    filter["after"] = posted_after
-                queryParams = urlencode(filter)
-                flux_url = "{}/fluxes?{}".format(
-                    settings.WON_SERVICE_ENDPOINT, queryParams)
-                print("Ask for new flux:", flux_url)
-                response = requests.get(flux_url)
-                self.last_fetch = datetime.now()
-
-                # Check if the request was successful
-                if response.status_code == 200:
-                    payload = response.json()
-                    items = payload["items"]
-                    total = payload["total"]
-                    has_more = payload["hasMore"]
-                    print("\nFound {} fluxes to process.\n".format(total))
-
-                    for flux in items:
-                        key = flux["id"]
-
-                        if key in self.fluxes_seen:
-                            print("Already got it")
-                        else:
-                            print("Processing flux id=", key)
-                            print(flux["content"])
-                            self.fluxes_seen[key] = flux
-                            if (flux["postedAt"]):
-                                self.high_water_mark = datetime.fromisoformat(
-                                    flux["postedAt"])
-
-                    offset = offset + total
-                    check_for_more = has_more
-
-                else:
-                    print(
-                        f"Error: Received status code {response.status_code}")
-                    check_for_more = False
-
-                self.status_report()
-                if check_for_more:
-                    print("But wait...there's more.")
-                else:
-                    print('===\n')
-
-        except requests.exceptions.RequestException as e:
-            print(f"Request error: {e}")
+        # make sure AI is alive and well
+        if self.ai.ping_ai():
+            print("AI agent is reachable")
+        else:
+            print("No response from AI agent")
+            raise Exception("AI agent is not responsive")
 
     def do_action(self):
-        self.fetch_fluxes()
+        offset = 0
+        check_for_more = True
+
+        while check_for_more:
+            print("Anything new to process?")
+            if self.latest_flux_seen:
+                batch = self.flux_svc.fetch_next_fluxes(
+                    posted_after=self.latest_flux_seen)
+            else:
+                batch = self.flux_svc.fetch_next_fluxes(offset=offset)
+
+            # returning None is the signal for an error that got swallowed
+            if not batch:
+                print("some kind of failure happened. exiting...")
+                return
+
+            total = batch["total"]
+            if (total):
+                print("Found some new flux posts.")
+            else:
+                print("No new items.")
+                break
+
+            items = batch["items"]
+            for flux in items:
+                key = flux["id"]
+
+                # avoid reprocessing fluxes, since using AI is relatively expensive
+                if key in self.fluxes_seen:
+                    print("Already processed flux with ID", key)
+                else:
+                    # rate the flux post
+                    print("Asking AI to rate flux", key)
+                    (rating, reason) = self.ai.evaluate_post(flux)
+                    print(
+                        f"AI has rated this flux as '{rating}' because '{reason}'")
+
+                    # record the rating
+                    self.flux_svc.rate_flux(key, rating, reason)
+
+                    # remember that we processed it (until restart, at least)
+                    self.fluxes_seen[key] = rating
+                    if (flux["postedAt"]):
+                        self.latest_flux_seen = datetime.fromisoformat(
+                            flux["postedAt"])
+
+            offset += total
+            check_for_more = batch["hasMore"]
+
+        print("That's all for now. Check as often as you like for anything new.\n\n")
