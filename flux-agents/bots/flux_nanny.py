@@ -1,6 +1,6 @@
 from datetime import datetime
 from urllib.parse import urlencode
-from api.llm import ModeratorBotClient
+from models.llm import ModeratorBotClient
 from api.flux_svc import FluxService
 
 
@@ -15,22 +15,19 @@ class FluxNanny:
         self.flux_svc = FluxService()
         self.ai = ModeratorBotClient()
 
+        # make sure AI is alive and well
+        if not self.ai.ping_ai():
+            print("No response from AI agent")
+            raise Exception("AI agent is not responsive")
+
         # set high-water mark to prevent re-work
         results = self.flux_svc.fetch_last_rating()
         if results:
             latest = results[0]
-            print(f"inspection: {latest}")
+            time_posted = datetime.fromisoformat(latest['postedAt'])
             print(
-                f"Setting high water mark at: {latest['postedAt']}")
-            self.latest_flux_seen = datetime.fromisoformat(
-                latest['postedAt'])
-
-        # make sure AI is alive and well
-        if self.ai.ping_ai():
-            print("AI agent is reachable")
-        else:
-            print("No response from AI agent")
-            raise Exception("AI agent is not responsive")
+                f"Setting high water mark at: {time_posted.strftime("%Y-%m-%d %H:%M:%S")}\n")
+            self.latest_flux_seen = time_posted
 
     def do_action(self):
         offset = 0
@@ -82,4 +79,4 @@ class FluxNanny:
             offset += total
             check_for_more = batch["hasMore"]
 
-        print("That's all for now. Check as often as you like for anything new.\n\n")
+        print("That's all for now.")

@@ -6,13 +6,14 @@ from urllib.parse import urlencode
 class FluxService:
 
     def __init__(self):
-        print(f"Flux service at endpoint: {WON_SERVICE_ENDPOINT}")
         self.endpoint = WON_SERVICE_ENDPOINT
         self.headers = {
             "Authorization": f"Bearer {WON_SERVICE_API_KEY}"
         }
+        print(f"Flux API at: {self.endpoint}")
 
     def fetch_last_rating(self):
+        print("See where we left off")
         url = f"{self.endpoint}/flux-moderation/latest-ratings?limit=1"
         response = requests.get(url, headers=self.headers)
 
@@ -32,7 +33,6 @@ class FluxService:
         if posted_after:
             filters["after"] = posted_after
         queryParams = urlencode(filters)
-
         url = f"{self.endpoint}/fluxes?{queryParams}"
         response = requests.get(url, headers=self.headers)
 
@@ -51,10 +51,15 @@ class FluxService:
             "reason": reason
         }
 
-        response = requests.post(url, json=payload, headers=self.headers)
+        try:
+            print("Rate a flux", payload)
+            response = requests.post(url, json=payload, headers=self.headers)
 
-        if response.status_code == 200 or response.status_code == 201:
-            return response.json()
-        else:
-            print(f"Error: Received status code {response.status_code}")
-            return None
+            if response.status_code == 200 or response.status_code == 201:
+                print("Rated", response)
+                return response.json()
+            else:
+                print(f"Error: Received status code {response.status_code}")
+                return None
+        except Exception as e:
+            print("Trouble sending rating to WoN service.", e)

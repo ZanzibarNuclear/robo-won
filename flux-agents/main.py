@@ -4,15 +4,20 @@ from config.settings import POLLING_INTERVAL
 
 
 def main():
+    print("=== STARTING AGENTS ===")
     roboNanny = FluxNanny()
+    polling_rest = 60
+    if POLLING_INTERVAL:
+        polling_rest = int(POLLING_INTERVAL)
     round = 0
     while True:
         try:
             round += 1
             print(f"==== ROUND {round} ====")
             roboNanny.do_action()
-            print(f"\n==== END ROUND {round} ====\n\n")
-            sleep(30)
+            print(f"==== END ROUND {round} ====\n")
+            print(f"==== chill for {polling_rest} seconds ====\n")
+            sleep(polling_rest)
         except KeyboardInterrupt as e:
             print("I guess you have had enough. Shutting down...goodbye!")
             break
