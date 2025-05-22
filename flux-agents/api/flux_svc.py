@@ -55,11 +55,9 @@ class FluxService:
 
         try:
             print("Rate a flux", payload)
-            response = requests.request(
-                method="POST",
+            response = requests.post(
                 url=url,
-                json=payload,
-                headers=post_headers
+                data=payload,
             )
             print(f"Request method used: {response.request.method}")
             print(f"Request URL: {response.request.url}")
