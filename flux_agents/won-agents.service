@@ -1,0 +1,16 @@
+[Unit]
+Description=Flux Moderator Agents Service
+After=network.target
+
+[Service]
+Type=simple
+User=<user>
+WorkingDirectory=/path/to/robo-won/flux_agents
+ExecStart=/usr/bin/python3 /path/to/robo-won/flux_agents/main.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/flux-agents.log
+StandardError=append:/var/log/flux-agents.log
+
+[Install]
+WantedBy=multi-user.target
