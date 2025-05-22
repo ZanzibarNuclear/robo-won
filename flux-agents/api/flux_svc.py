@@ -50,10 +50,17 @@ class FluxService:
             "rating": rating_code,
             "reason": reason
         }
+        post_headers = self.headers.copy()
+        post_headers['Content-Type'] = 'application/json'
 
         try:
             print("Rate a flux", payload)
-            response = requests.post(url, json=payload, headers=self.headers)
+            response = requests.request(
+                method="POST",
+                url=url,
+                json=payload,
+                headers=post_headers
+            )
 
             if response.status_code == 200 or response.status_code == 201:
                 print("Rated", response)
