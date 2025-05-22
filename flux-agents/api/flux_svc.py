@@ -50,24 +50,14 @@ class FluxService:
             "rating": rating_code,
             "reason": reason
         }
-        # post_headers = self.headers.copy()
-        # post_headers['Content-Type'] = 'application/json'
-
         try:
-            print("Rate a flux", payload)
+            print("Store rating for flux", flux_id)
             response = requests.post(
                 url=url,
                 json=payload,
                 headers=self.headers
             )
-            # print("Original request method:", response.request.method)
-            # print("Redirect history:", response.history)
-            # for resp in response.history:
-            #     print(
-            #         f"Redirected with status {resp.status_code} to {resp.headers.get('Location')}, method was {resp.request.method}")
-
             if response.status_code == 200 or response.status_code == 201:
-                print("Rated", response.json())
                 return response.json()
             else:
                 print(f"Error: Received status code {response.status_code}")
