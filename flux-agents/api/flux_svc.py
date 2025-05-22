@@ -61,8 +61,14 @@ class FluxService:
                 json=payload,
                 headers=post_headers
             )
+            print(f"Request method used: {response.request.method}")
+            print(f"Request URL: {response.request.url}")
+            print(f"Request headers: {response.request.headers}")
 
-            if response.status_code == 200 or response.status_code == 201:
+            if response.status_code == 200:
+                print("Something is fishy; should have created a new record")
+                return response.json()
+            elif response.status_code == 201:
                 print("Rated", response)
                 return response.json()
             else:
