@@ -2,6 +2,7 @@ from datetime import datetime
 from urllib.parse import urlencode
 from models.llm import ModeratorBotClient
 from api.flux_svc import FluxService
+from utils.logger import logger
 
 
 class FluxNanny:
@@ -17,7 +18,8 @@ class FluxNanny:
 
         # make sure AI is alive and well
         if not self.ai.ping_ai():
-            print("No response from AI agent")
+            logger.error("ai_not_responsive",
+                         message="No response from AI agent")
             raise Exception("AI agent is not responsive")
 
         # set high-water mark to prevent re-work
@@ -25,8 +27,8 @@ class FluxNanny:
         if results:
             latest = results[0]
             time_posted = datetime.fromisoformat(latest['postedAt'])
-            print(
-                f"Setting high water mark at: {time_posted.strftime("%Y-%m-%d %H:%M:%S")}\n")
+            formatted_time = time_posted.strftime("%Y-%m-%d %H:%M:%S")
+            logger.info("high_water_mark_set", timestamp=formatted_time)
             self.latest_flux_seen = time_posted
 
     def do_action(self):
@@ -34,7 +36,8 @@ class FluxNanny:
         check_for_more = True
 
         while check_for_more:
-            print("Anything new to process?")
+            logger.info("checking_new_items",
+                        message="Anything new to process?")
             if self.latest_flux_seen:
                 batch = self.flux_svc.fetch_next_fluxes(
                     posted_after=self.latest_flux_seen)
@@ -43,14 +46,15 @@ class FluxNanny:
 
             # returning None is the signal for an error that got swallowed
             if not batch:
-                print("some kind of failure happened. exiting...")
+                logger.error("batch_processing_failed",
+                             message="Some kind of failure happened. Exiting...")
                 return
 
             total = batch["total"]
             if (total):
-                print("Found some new flux posts.")
+                logger.info("new_flux_posts_found", count=total)
             else:
-                print("No new items.")
+                logger.info("no_new_items")
                 break
 
             items = batch["items"]
@@ -59,13 +63,13 @@ class FluxNanny:
 
                 # avoid reprocessing fluxes, since using AI is relatively expensive
                 if key in self.fluxes_seen:
-                    print("Already processed flux with ID", key)
+                    logger.info("flux_already_processed", flux_id=key)
                 else:
                     # rate the flux post
-                    print("Asking AI to rate flux", key)
+                    logger.info("rating_flux", flux_id=key)
                     (rating, reason) = self.ai.evaluate_post(flux)
-                    print(
-                        f"AI has rated this flux as '{rating}' because '{reason}'")
+                    logger.info("flux_rated", flux_id=key,
+                                rating=rating, reason=reason)
 
                     # record the rating
                     self.flux_svc.rate_flux(key, rating, reason)
@@ -79,4 +83,4 @@ class FluxNanny:
             offset += total
             check_for_more = batch["hasMore"]
 
-        print("That's all for now.")
+        logger.info("processing_complete", message="That's all for now.")

@@ -1,10 +1,12 @@
 import json
+import requests
 from ollama import Client
 from .prompts import *
 from .formats import *
 from string import Template
 from config.settings import LLM_MODEL
 from datetime import datetime
+from utils.logger import logger, log_connection_error
 
 
 class ModeratorBotClient:
@@ -17,21 +19,27 @@ class ModeratorBotClient:
         # might be better to raise an exception if no model specified;
         # then again, we have ping to make sure the model loads and runs
 
-        print("Requesting model", self.model)
+        logger.info("model_requested", model=self.model)
 
     def ping_ai(self):
         """
         See if the AI is listening. Find out how it's doing.
         """
-        print(f"\nLet's make sure we can reach our AI agent.")
+        logger.info(
+            "pinging_ai", message="Let's make sure we can reach our AI agent.")
         try:
             response = self.client.generate(model=self.model)
             time_of_response = datetime.fromisoformat(
                 response['created_at']).strftime("%Y-%m-%d %H:%M:%S")
-            print(f"AI responded at {time_of_response}\n")
+            logger.info("ai_responded", timestamp=time_of_response)
             return True
+        except requests.exceptions.ConnectionError as e:
+            log_connection_error(logger, "ai_connection_error",
+                                 model=self.model,
+                                 message="Connection error while pinging AI")
+            return False
         except Exception as e:
-            print("AI is not responsive.", e)
+            logger.error("ai_not_responsive", error=str(e), error_type="other")
             return False
 
     def prepare_to_classify(self):
@@ -44,10 +52,16 @@ class ModeratorBotClient:
         """
         # NOTE: preparing the model for a batch of posts did not work as well
         # as providing instructions every time
-        response = self.client.generate(
-            model=self.model, prompt=rating_instructions, stream=False, format=response_format)
-        parsed = json.loads(response['response'])
-        print(parsed['reply'])
+        try:
+            response = self.client.generate(
+                model=self.model, prompt=rating_instructions, stream=False, format=response_format)
+            parsed = json.loads(response['response'])
+            logger.info("ai_prepared", reply=parsed['reply'])
+        except requests.exceptions.ConnectionError as e:
+            log_connection_error(logger, "ai_prepare_connection_error",
+                                 model=self.model,
+                                 message="Connection error while preparing AI")
+            raise
 
     def evaluate_post(self, post):
         """
@@ -58,13 +72,27 @@ class ModeratorBotClient:
         prompt = Template(assign_rating_level)
         full_prompt = prompt.substitute(content=content)
 
-        # make the call to AI
-        response = self.client.generate(
-            model=self.model, prompt=full_prompt, stream=False, format=rating_format, options={"temperature": 0})
+        try:
+            # make the call to AI
+            response = self.client.generate(
+                model=self.model, prompt=full_prompt, stream=False, format=rating_format, options={"temperature": 0})
 
-        # process response
-        decision = json.loads(response['response'])
-        return (decision['rating'], decision['reason'])
+            # process response
+            decision = json.loads(response['response'])
+            return (decision['rating'], decision['reason'])
+        except requests.exceptions.ConnectionError as e:
+            log_connection_error(logger, "evaluate_post_connection_error",
+                                 model=self.model, post_id=post.get(
+                                     "id", "unknown"),
+                                 message="Connection error while evaluating post")
+            # Return a default rating for connection errors
+            return ("error", "Connection error while evaluating post")
+        except Exception as e:
+            logger.exception("evaluate_post_error",
+                             post_id=post.get("id", "unknown"),
+                             error=str(e))
+            # Return a default rating for other errors
+            return ("error", f"Error evaluating post: {str(e)}")
 
 
 sample_posts = [
@@ -90,14 +118,15 @@ def main():
     bot = ModeratorBotClient()
     made_contact = bot.ping_ai()
     if not made_contact:
-        print('oh no!!')
+        logger.error("ai_connection_failed", message="oh no!!")
         return
-    print('Our moderator is available.')
+    logger.info("moderator_available", message="Our moderator is available.")
 
     # include instructions with each post
     for post in sample_posts:
         answer = bot.evaluate_post(post)
-        print(f"Post {post["id"]}: rating {answer}\n")
+        logger.info("post_evaluated",
+                    post_id=post["id"], rating=answer[0], reason=answer[1])
 
 
 if __name__ == "__main__":
