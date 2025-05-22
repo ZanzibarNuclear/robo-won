@@ -60,9 +60,11 @@ class FluxService:
                 json=payload,
                 headers=post_headers
             )
-            print(f"Request method used: {response.request.method}")
-            print(f"Request URL: {response.request.url}")
-            print(f"Request headers: {response.request.headers}")
+            print("Original request method:", response.request.method)
+            print("Redirect history:", response.history)
+            for resp in response.history:
+                print(
+                    f"Redirected with status {resp.status_code} to {resp.headers.get('Location')}, method was {resp.request.method}")
 
             if response.status_code == 200:
                 print("Something is fishy; should have created a new record")
