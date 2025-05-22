@@ -1,10 +1,11 @@
 from bots.flux_nanny import FluxNanny
 from time import sleep
 from config.settings import POLLING_INTERVAL
+from utils.logger import logger
 
 
 def main():
-    print("=== STARTING AGENTS ===")
+    logger.info("starting_agents", message="=== STARTING AGENTS ===")
     roboNanny = FluxNanny()
     polling_rest = 60
     if POLLING_INTERVAL:
@@ -13,16 +14,18 @@ def main():
     while True:
         try:
             round += 1
-            print(f"==== ROUND {round} ====")
+            logger.info("round_start", round=round)
             roboNanny.do_action()
-            print(f"==== END ROUND {round} ====\n")
-            print(f"==== chill for {polling_rest} seconds ====\n")
+            logger.info("round_end", round=round)
+            logger.info("polling_rest", seconds=polling_rest)
             sleep(polling_rest)
-        except KeyboardInterrupt as e:
-            print("I guess you have had enough. Shutting down...goodbye!")
+        except KeyboardInterrupt:
+            logger.info("shutdown", reason="keyboard_interrupt",
+                        message="I guess you have had enough. Shutting down...goodbye!")
             break
         except Exception as e:
-            print("Well, that was unexpected. Gotta go.", e)
+            logger.exception("unexpected_error", error=str(
+                e), message="Well, that was unexpected. Gotta go.")
             break
 
 

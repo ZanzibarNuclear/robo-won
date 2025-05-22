@@ -1,6 +1,7 @@
 from config.settings import WON_SERVICE_ENDPOINT, WON_SERVICE_API_KEY
 import requests
 from urllib.parse import urlencode
+from utils.logger import logger
 
 
 class FluxService:
@@ -10,17 +11,18 @@ class FluxService:
         self.headers = {
             "Authorization": f"Bearer {WON_SERVICE_API_KEY}"
         }
-        print(f"Flux API at: {self.endpoint}")
+        logger.info("flux_api_initialized", endpoint=self.endpoint)
 
     def fetch_last_rating(self):
-        print("See where we left off")
+        logger.info("fetching_last_rating", message="See where we left off")
         url = f"{self.endpoint}/flux-moderation/latest-ratings?limit=1"
         response = requests.get(url, headers=self.headers)
 
         if response.status_code == 200:
             return response.json()
         else:
-            print(f"Error: {response}")
+            logger.error("fetch_last_rating_failed",
+                         status_code=response.status_code, response=str(response))
             raise Exception(
                 "Blocked from getting latest; something may be misconfigured")
 
@@ -39,8 +41,8 @@ class FluxService:
         if response.status_code == 200:
             return response.json()
         else:
-            print(
-                f"Error: Received status code {response.status_code}")
+            logger.error("fetch_next_fluxes_failed",
+                         status_code=response.status_code)
             return None
 
     def rate_flux(self, flux_id, rating_code, reason):
@@ -51,7 +53,7 @@ class FluxService:
             "reason": reason
         }
         try:
-            print("Store rating for flux", flux_id)
+            logger.info("storing_flux_rating", flux_id=flux_id)
             response = requests.post(
                 url=url,
                 json=payload,
@@ -60,7 +62,9 @@ class FluxService:
             if response.status_code == 200 or response.status_code == 201:
                 return response.json()
             else:
-                print(f"Error: Received status code {response.status_code}")
+                logger.error("rate_flux_failed",
+                             status_code=response.status_code, flux_id=flux_id)
                 return None
         except Exception as e:
-            print("Trouble sending rating to WoN service.", e)
+            logger.exception("rate_flux_exception",
+                             error=str(e), flux_id=flux_id)

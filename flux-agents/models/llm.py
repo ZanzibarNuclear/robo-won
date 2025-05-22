@@ -5,6 +5,7 @@ from .formats import *
 from string import Template
 from config.settings import LLM_MODEL
 from datetime import datetime
+from utils.logger import logger
 
 
 class ModeratorBotClient:
@@ -17,21 +18,22 @@ class ModeratorBotClient:
         # might be better to raise an exception if no model specified;
         # then again, we have ping to make sure the model loads and runs
 
-        print("Requesting model", self.model)
+        logger.info("model_requested", model=self.model)
 
     def ping_ai(self):
         """
         See if the AI is listening. Find out how it's doing.
         """
-        print(f"\nLet's make sure we can reach our AI agent.")
+        logger.info(
+            "pinging_ai", message="Let's make sure we can reach our AI agent.")
         try:
             response = self.client.generate(model=self.model)
             time_of_response = datetime.fromisoformat(
                 response['created_at']).strftime("%Y-%m-%d %H:%M:%S")
-            print(f"AI responded at {time_of_response}\n")
+            logger.info("ai_responded", timestamp=time_of_response)
             return True
         except Exception as e:
-            print("AI is not responsive.", e)
+            logger.error("ai_not_responsive", error=str(e))
             return False
 
     def prepare_to_classify(self):
@@ -47,7 +49,7 @@ class ModeratorBotClient:
         response = self.client.generate(
             model=self.model, prompt=rating_instructions, stream=False, format=response_format)
         parsed = json.loads(response['response'])
-        print(parsed['reply'])
+        logger.info("ai_prepared", reply=parsed['reply'])
 
     def evaluate_post(self, post):
         """
@@ -90,14 +92,15 @@ def main():
     bot = ModeratorBotClient()
     made_contact = bot.ping_ai()
     if not made_contact:
-        print('oh no!!')
+        logger.error("ai_connection_failed", message="oh no!!")
         return
-    print('Our moderator is available.')
+    logger.info("moderator_available", message="Our moderator is available.")
 
     # include instructions with each post
     for post in sample_posts:
         answer = bot.evaluate_post(post)
-        print(f"Post {post["id"]}: rating {answer}\n")
+        logger.info("post_evaluated",
+                    post_id=post["id"], rating=answer[0], reason=answer[1])
 
 
 if __name__ == "__main__":
