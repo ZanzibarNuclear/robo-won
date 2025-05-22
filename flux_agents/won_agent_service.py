@@ -3,6 +3,9 @@
 Controller script for running flux_agents as a Linux service.
 This script provides functionality to start, stop, restart, and check the status
 of the flux_agents service.
+
+When starting the service, this script automatically sets RUNNING_AS_SERVICE=true
+to prevent duplicate log entries (since stdout is redirected to the log file).
 """
 
 import os
@@ -54,13 +57,18 @@ def start():
     # Change to the script directory before running
     os.chdir(SCRIPT_DIR)
 
+    # Set up environment variables for the service
+    env = os.environ.copy()
+    env['RUNNING_AS_SERVICE'] = 'true'
+
     # Start the process and redirect output to the log file
     with open(log_path, 'a') as log_file:
         process = subprocess.Popen(
             [sys.executable, 'main.py'],
             stdout=log_file,
             stderr=log_file,
-            start_new_session=True
+            start_new_session=True,
+            env=env
         )
 
     # Write the PID to the PID file

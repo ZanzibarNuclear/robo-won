@@ -14,6 +14,10 @@ except ImportError:
     load_dotenv()
     LOG_FILE = os.getenv("LOG_FILE", "./flux-moderator.log")
 
+# Environment variable to control logging behavior:
+# RUNNING_AS_SERVICE=true - Only log to file (prevents duplicate logs when stdout is redirected to the same file)
+# RUNNING_AS_SERVICE=false (default) - Log to both file and stdout
+
 # Ensure log directory exists
 log_dir = os.path.dirname(LOG_FILE)
 if log_dir and not os.path.exists(log_dir):
@@ -49,16 +53,22 @@ def connection_error_processor(logger, method_name, event_dict):
 
 def configure_logging():
     """Configure structured logging for the application."""
-    # Set up the standard library logger to write to a file
+    # Determine if we're running as a service or in interactive mode
+    # When running as a service, we only need the file handler since stdout is redirected to the log file
+    is_service = os.getenv("RUNNING_AS_SERVICE", "false").lower() == "true"
+
+    # Set up handlers based on the running mode
+    handlers = [logging.FileHandler(LOG_FILE)]
+
+    # Only add stdout handler if not running as a service
+    if not is_service:
+        handlers.append(logging.StreamHandler(sys.stdout))
+
+    # Set up the standard library logger
     logging.basicConfig(
         level=logging.INFO,
         format="%(message)s",
-        handlers=[
-            # Log to file
-            logging.FileHandler(LOG_FILE),
-            # Also log to console for debugging
-            logging.StreamHandler(sys.stdout)
-        ]
+        handlers=handlers
     )
 
     # Configure structlog to use the standard library logger
