@@ -22,23 +22,23 @@ The flux_agents can be run as a service on Linux systems using either the provid
 
 ### Using the Controller Script
 
-The `flux_service.py` script provides a simple way to manage the flux_agents service:
+The `won_agent_service.py` script provides a simple way to manage the flux_agents service:
 
 ```bash
 # Make the script executable (if not already)
-chmod +x flux_service.py
+chmod +x won_agent_service.py
 
 # Start the service
-./flux_service.py start
+./won_agent_service.py start
 
 # Check the status
-./flux_service.py status
+./won_agent_service.py status
 
 # Stop the service
-./flux_service.py stop
+./won_agent_service.py stop
 
 # Restart the service
-./flux_service.py restart
+./won_agent_service.py restart
 ```
 
 The service will write logs to the location specified by `LOG_FILE` in the settings, and will store its PID in the file specified by `PID_FILE`.
@@ -47,7 +47,7 @@ The service will write logs to the location specified by `LOG_FILE` in the setti
 
 For a more robust service management on Linux systems that use systemd:
 
-1. Edit the provided `flux-agents.service` file:
+1. Edit the provided `won-agents.service` file:
 
    - Update the `User` field with the appropriate username
    - Update the `WorkingDirectory` and `ExecStart` paths to match your installation
@@ -56,16 +56,16 @@ For a more robust service management on Linux systems that use systemd:
 
    ```bash
    # Copy the service file to the systemd directory
-   sudo cp flux-agents.service /etc/systemd/system/
+   sudo cp flux_agents.service /etc/systemd/system/
 
    # Reload systemd to recognize the new service
    sudo systemctl daemon-reload
 
    # Enable the service to start on boot
-   sudo systemctl enable flux-agents
+   sudo systemctl enable won-agents
 
    # Start the service
-   sudo systemctl start flux-agents
+   sudo systemctl start won-agents
    ```
 
 3. Managing the service:
