@@ -58,6 +58,7 @@ class FluxService:
             response = requests.post(
                 url=url,
                 json=payload,
+                headers=post_headers
             )
             print(f"Request method used: {response.request.method}")
             print(f"Request URL: {response.request.url}")
