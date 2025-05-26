@@ -13,39 +13,33 @@ class FluxService:
         }
         logger.info("flux_api_initialized", endpoint=self.endpoint)
 
-    def fetch_last_rating(self):
-        logger.info("fetching_last_rating", message="See where we left off")
-        url = f"{self.endpoint}/flux-moderation/latest-ratings?limit=1"
-        try:
-            response = requests.get(url, headers=self.headers)
+    # def fetch_last_rating(self):
+    #     logger.info("fetching_last_rating", message="See where we left off")
+    #     url = f"{self.endpoint}/flux-moderation/ratings?limit=1&latest=true"
+    #     try:
+    #         response = requests.get(url, headers=self.headers)
 
-            if response.status_code == 200:
-                return response.json()
-            else:
-                logger.error("fetch_last_rating_failed",
-                             status_code=response.status_code, response=str(response))
-                raise Exception(
-                    "Blocked from getting latest; something may be misconfigured")
-        except requests.exceptions.ConnectionError as e:
-            log_connection_error(logger, "fetch_last_rating_connection_error",
-                                 url=url, message="Connection error while fetching last rating")
-            raise Exception(
-                "Connection error while fetching last rating") from e
+    #         if response.status_code == 200:
+    #             return response.json()
+    #         else:
+    #             logger.error("fetch_last_rating_failed",
+    #                          status_code=response.status_code, response=str(response))
+    #             raise Exception(
+    #                 "Blocked from getting latest; something may be misconfigured")
+    #     except requests.exceptions.ConnectionError as e:
+    #         log_connection_error(logger, "fetch_last_rating_connection_error",
+    #                              url=url, message="Connection error while fetching last rating")
+    #         raise Exception(
+    #             "Connection error while fetching last rating") from e
 
-    def fetch_next_fluxes(self, offset=0, limit=5, posted_after=None):
-        filters = {"order": "oldest"}
-        if offset:
-            filters["offset"] = str(offset)
+    def fetch_next_fluxes(self, limit=0):
+        filters = {}
         if limit:
             filters["limit"] = str(limit)
-        if posted_after:
-            filters["after"] = posted_after
         queryParams = urlencode(filters)
-        url = f"{self.endpoint}/fluxes?{queryParams}"
-
+        url = f"{self.endpoint}/flux-moderation/unrated-fluxes?{queryParams}"
         try:
             response = requests.get(url, headers=self.headers)
-
             if response.status_code == 200:
                 return response.json()
             else:
